@@ -18,7 +18,7 @@ export OBJDUMP="llvm-objdump"
 export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
-git clone https://github.com/ianchb/sm8550-mainline.git --branch sheng-7.0.12 --depth 1 linux
+git clone https://github.com/ianchb/sm8550-mainline.git --branch sheng-7.1.0 --depth 1 linux
 cd linux
 
 # MIPPS

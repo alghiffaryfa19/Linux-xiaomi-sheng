@@ -106,8 +106,20 @@ if [ "$distro_variant" = "desktop" ]; then
         chroot rootdir systemctl enable lightdm
 
     elif [ "$FLAVOUR" = "gnome" ]; then
+        chroot apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
+
         chroot rootdir apt install -y \
             gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
+
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-97/gnome-shell-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter/mutter-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd/gsd-mobile.deb
+
+        cp *.deb rootdir/tmp/
+
+        chroot apt-get install -y /tmp/*deb --allow-downgrades -o Dpkg::Options::="--force-overwrite"
+
+        chroot apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
     fi
