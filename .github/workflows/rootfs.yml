@@ -10,8 +10,6 @@ on:
       build_type:
         description: '构建类型选择'
         options:
-          - all
-          - server-only
           - desktop-only
         required: true
         type: choice
@@ -115,13 +113,7 @@ jobs:
       packages: read
     strategy:
       matrix:
-        distro: ${{ 
-            (github.event.inputs.build_type == 'server-only')
-            && fromJSON('["debian-server", "ubuntu-server"]')
-            || (github.event.inputs.build_type == 'desktop-only')
-            && fromJSON('["debian-desktop", "ubuntu-desktop"]')
-            || fromJSON('["debian-server", "debian-desktop", "ubuntu-server", "ubuntu-desktop"]')
-            }}
+        distro: ${{ fromJSON('["debian-desktop"]') }}
       fail-fast: false
 
     steps:

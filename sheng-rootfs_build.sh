@@ -106,7 +106,7 @@ if [ "$distro_variant" = "desktop" ]; then
         chroot rootdir systemctl enable lightdm
 
     elif [ "$FLAVOUR" = "gnome" ]; then
-        chroot apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
+        chroot rootdir apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir apt install -y \
             gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
@@ -117,9 +117,9 @@ if [ "$distro_variant" = "desktop" ]; then
 
         cp *.deb rootdir/tmp/
 
-        chroot apt-get install -y /tmp/*deb --allow-downgrades -o Dpkg::Options::="--force-overwrite"
+        chroot rootdir apt-get install -y /tmp/*deb --allow-downgrades -o Dpkg::Options::="--force-overwrite"
 
-        chroot apt-mark hold gnome-shell mutter gnome-settings-daemon
+        chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
     fi
