@@ -2,7 +2,7 @@ name: Build Kernel Bundle
 
 on:
   workflow_run:
-    workflows: ["Build Kernel"]   # HARUS sama dengan "name" di build.yml
+    workflows: ["Build Kernel"]
     types:
       - completed
 
@@ -11,7 +11,7 @@ on:
       kernel_version:
         description: "Kernel version"
         required: true
-        default: "7.0"
+        default: "7.1"
 
 jobs:
   bundle:
@@ -19,50 +19,57 @@ jobs:
     permissions:
       contents: write
 
+    # Jangan jalan kalau Build Kernel gagal
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    env:
+      KERNEL_VERSION: ${{ inputs.kernel_version || '7.1' }}
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Download all source releases
-      run: |
+      - name: Download all source releases
+        run: |
+          mkdir -p bundle
+          cd bundle
 
-        mkdir bundle && cd bundle
+          echo "⬇️ Download kernel packages"
+          gh release download "kernel-${KERNEL_VERSION}" \
+            --pattern "*.deb" \
+            --repo "${{ github.repository }}" \
+            --clobber || true
 
-        echo "⬇️ Download kernel packages"
-        gh release download "kernel-7.0" \
-          --pattern "*.deb" \
-          --repo "${{ github.repository }}" \
-          --clobber || true
+          echo "⬇️ Download sheng_devauth"
+          gh release download "sheng_devauth" \
+            --pattern "*.deb" \
+            --repo "${{ github.repository }}" \
+            --clobber || true
 
-        echo "⬇️ Download sheng_devauth"
-        gh release download "sheng_devauth" \
-          --pattern "*.deb" \
-          --repo "${{ github.repository }}" \
-          --clobber || true
+          echo "⬇️ Download sensor"
+          gh release download "sensor" \
+            --pattern "*.deb" \
+            --repo "${{ github.repository }}" \
+            --clobber || true
 
-        echo "⬇️ Download sensor"
-        gh release download "sensor" \
-          --pattern "*.deb" \
-          --repo "${{ github.repository }}" \
-          --clobber || true
+          echo "📂 Final bundle:"
+          ls -lah
 
-        echo "📂 Final bundle:"
-        ls -lah
+          COUNT=$(ls *.deb 2>/dev/null | wc -l)
+          if [ "$COUNT" -lt 5 ]; then
+            echo "❌ Not enough packages"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-        COUNT=$(ls *.deb 2>/dev/null | wc -l)
-        if [ "$COUNT" -lt 5 ]; then
-          echo "❌ Not enough packages"
-          exit 1
-        fi
-
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Create bundle release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: kernel-bundle-${{ github.event.inputs.kernel_version }}
-        name: Kernel Bundle ${{ github.event.inputs.kernel_version }}
-        files: bundle/*.deb
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create bundle release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: kernel-bundle-${{ env.KERNEL_VERSION }}
+          name: Kernel Bundle ${{ env.KERNEL_VERSION }}
+          files: bundle/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
