@@ -106,8 +106,10 @@ if [ "$distro_variant" = "desktop" ]; then
         chroot rootdir systemctl enable lightdm
 
     elif [ "$FLAVOUR" = "gnome" ]; then
+    
+        chroot rootdir sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
+    
         chroot rootdir apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
-
         chroot rootdir apt install -y \
             gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
 
