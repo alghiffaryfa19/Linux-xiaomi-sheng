@@ -107,8 +107,24 @@ if [ "$distro_variant" = "desktop" ]; then
 
     elif [ "$FLAVOUR" = "gnome" ]; then
     
-        chroot rootdir sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
-    
+        cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
+Types: deb deb-src
+URIs: http://deb.debian.org/debian
+Suites: trixie trixie-updates
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb deb-src
+URIs: http://security.debian.org/debian-security
+Suites: trixie-security
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+
+    : > rootdir/etc/apt/sources.list
+
+        chroot rootdir apt update
+
         chroot rootdir apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
         chroot rootdir apt install -y \
             gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
