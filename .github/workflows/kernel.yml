@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "⚙️ 正在安装必要的构建工具..."
           sudo apt update
-          sudo apt install -y build-essential flex bison libssl-dev libelf-dev bc ccache clang llvm lld
+          sudo apt install -y build-essential flex bison libssl-dev libelf-dev bc ccache clang llvm lld systemd-ukify
           echo "✅ 构建工具安装完成"
           
           # 确保ccache目录存在（无论缓存是否命中）
@@ -104,6 +104,12 @@ jobs:
         with:
           name: boot_dual.img
           path: ${{ github.workspace }}/boot_sheng_dualboot.img
+
+      - name: Upload efi file
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootaa64.efi
+          path: ${{ github.workspace }}/bootaa64.efi
 
       - name: "🏷️ 创建GitHub Release"
         if: steps.collect_artifacts.outputs.pkg_count > 0 && github.event_name == 'workflow_dispatch'
