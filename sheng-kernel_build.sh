@@ -45,6 +45,9 @@ mkdir -p $PKGDIR/boot
 install -Dm644 arch/$ARCH/boot/Image.gz \
     $PKGDIR/boot/Image.gz
 
+install -Dm644 arch/$ARCH/boot/Image \
+    $PKGDIR/boot/Image
+
 install -Dm644 arch/$ARCH/boot/dts/qcom/sm8550-xiaomi-sheng.dtb \
     $PKGDIR/boot/sm8550-xiaomi-sheng.dtb
 
@@ -66,7 +69,7 @@ mv Image.gz-dtb_sheng zImage_sheng
 ../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
 
 ukify build \
-  --linux=zImage_sheng \
+  --linux=arch/arm64/boot/Image \
   --devicetree=arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dtb \
   --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw" \
   --output=../bootaa64.efi

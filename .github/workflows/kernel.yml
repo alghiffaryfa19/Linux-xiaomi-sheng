@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "⚙️ 正在安装必要的构建工具..."
           sudo apt update
-          sudo apt install -y build-essential flex bison libssl-dev libelf-dev bc ccache clang llvm lld systemd-ukify
+          sudo apt install -y build-essential flex bison libssl-dev libelf-dev bc ccache clang llvm lld systemd-ukify systemd-boot-efi
           echo "✅ 构建工具安装完成"
           
           # 确保ccache目录存在（无论缓存是否命中）
