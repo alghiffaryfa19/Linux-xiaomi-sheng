@@ -133,10 +133,10 @@ EOF
         wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter/mutter-mobile.deb
         wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd/gsd-mobile.deb
 
-        cp *.deb rootdir/tmp/
 
-        chroot rootdir apt-get install -y /tmp/*deb --allow-downgrades -o Dpkg::Options::="--force-overwrite"
-
+        cp ./*.deb rootdir/tmp/
+        chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
+        
         chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
