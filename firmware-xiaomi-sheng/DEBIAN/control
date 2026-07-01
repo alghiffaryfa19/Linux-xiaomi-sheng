@@ -1,5 +1,5 @@
 Package: firmware-xiaomi-sheng
-Version: 1.0
+Version: 2.0
 Architecture: arm64
 Maintainer: map220v
 Conflicts: linux-firmware
