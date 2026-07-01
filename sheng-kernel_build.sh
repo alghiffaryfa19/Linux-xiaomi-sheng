@@ -88,6 +88,7 @@ mkdir -p firmware-xiaomi-sheng/usr/lib/firmware
 cp -r sheng-firmware/* firmware-xiaomi-sheng/usr/lib/firmware/
 
 git clone https://github.com/map220v/alsa-ucm-conf
+mkdir -p alsa-xiaomi-sheng/usr/share/alsa
 cp -r alsa-ucm-conf/ucm2 alsa-xiaomi-sheng/usr/share/alsa/
 
 dpkg-deb --build --root-owner-group linux-xiaomi-sheng
