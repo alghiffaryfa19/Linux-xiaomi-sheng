@@ -19,7 +19,7 @@ export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
 
-cd ..
+
 git clone https://github.com/alghiffaryfa19/sheng-firmware
 cd sheng-firmware
 
