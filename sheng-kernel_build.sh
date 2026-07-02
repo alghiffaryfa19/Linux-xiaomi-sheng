@@ -18,7 +18,7 @@ export OBJDUMP="llvm-objdump"
 export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
-git clone https://github.com/ianchb/sm8550-mainline.git --branch sheng-7.1.2 --depth 1 linux
+git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.1.2 --depth 1 linux
 cd linux
 
 # MIPPS
@@ -80,7 +80,7 @@ make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1 INSTALL_MOD_PATH=../linux-xi
 rm ../linux-xiaomi-sheng/lib/modules/**/build
 
 cd ..
-git clone https://github.com/ianchb/sheng-firmware
+git clone https://github.com/alghiffaryfa19/sheng-firmware
 cd sheng-firmware
 
 cd ..
