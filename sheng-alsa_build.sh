@@ -19,8 +19,17 @@ export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
 
+cd ..
+git clone https://github.com/alghiffaryfa19/sheng-firmware
+cd sheng-firmware
+
+cd ..
+mkdir -p firmware-xiaomi-sheng/usr/lib/firmware
+cp -r sheng-firmware/* firmware-xiaomi-sheng/usr/lib/firmware/
+
 git clone https://github.com/map220v/alsa-ucm-conf
 mkdir -p alsa-xiaomi-sheng/usr/share/alsa
 cp -r alsa-ucm-conf/ucm2 alsa-xiaomi-sheng/usr/share/alsa/
 
+dpkg-deb --build --root-owner-group firmware-xiaomi-sheng
 dpkg-deb --build --root-owner-group alsa-xiaomi-sheng
