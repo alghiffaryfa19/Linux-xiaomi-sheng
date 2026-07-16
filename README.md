@@ -15,7 +15,7 @@ All the files here have been contributed by other users, here you will find a gu
 | Core            | Touchscreen        | Works    | — |
 | Core            | Keyboard           | Works    | Whether the built-in physical keyboard works. |
 | Core            | Touchpad           | Works    | Whether the built-in touchpad works. |
-| Core            | Stylus             | Broken   | WIP |
+| Core            | Stylus             | Works   | Not working at 144Hz |
 | Multimedia      | 3D Acceleration    | Works    | — |
 | Multimedia      | Audio              | Works    | Audio playback, microphone, headset and buttons. |
 | Multimedia      | Camera             | Works    | — |
