@@ -69,7 +69,8 @@ chroot rootdir apt install -y \
 echo "📦 Installing device-specific .deb packages..."
 
 # Copy semua .deb ke rootfs
-wget https://github.com/code002-2/Xiaomi-pad-6s-pro-Linux/releases/download/mipps/xiaomi-mipps-auth_0.11_arm64.deb
+wget https://github.com/ianchb/xiaomi-mipps-auth/releases/download/0.21/xiaomi-mipps-auth_0.21_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-thp/releases/download/v0.3.0/xiaomi-sheng-thp_0.3.0_arm64.deb
 cp *.deb rootdir/tmp/
 
 # Install dependency dulu (biar aman)
