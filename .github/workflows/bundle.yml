@@ -11,7 +11,7 @@ on:
       kernel_version:
         description: "Kernel version"
         required: true
-        default: "7.1"
+        default: "7.1.5"
 
 jobs:
   bundle:
