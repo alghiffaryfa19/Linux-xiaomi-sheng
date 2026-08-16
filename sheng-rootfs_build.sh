@@ -86,7 +86,7 @@ chroot rootdir apt install -y \
 # debug
 ls -lah rootdir/tmp/
 
-chroot rootdir bash -c "apt update && apt install -y /tmp/*.deb" || exit 1
+chroot rootdir bash -c 'apt update && apt install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb' || exit 1
 
 echo "✅ All custom .deb installed"
 
