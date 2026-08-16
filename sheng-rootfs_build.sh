@@ -24,7 +24,7 @@ if [ "$distro_type" != "debian" ]; then
     exit 1
 fi
 
-distro_version="trixie"
+distro_version="forky"
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
@@ -70,7 +70,9 @@ echo "📦 Installing device-specific .deb packages..."
 
 # Copy semua .deb ke rootfs
 wget https://github.com/ianchb/xiaomi-mipps-auth/releases/download/0.21/xiaomi-mipps-auth_0.21_arm64.deb
-wget https://github.com/ianchb/xiaomi-sheng-thp/releases/download/v0.3.0/xiaomi-sheng-thp_0.3.0_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-thp/releases/download/v0.3.9/xiaomi-sheng-thp_0.3.9_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-fingerprint/releases/download/v0.1.4/xiaomi-sheng-fingerprint_0.1.4_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-keyboard-helper/releases/download/v0.2.0/xiaomi-sheng-keyboard-helper_0.2.0_arm64.deb
 cp *.deb rootdir/tmp/
 
 # Install dependency dulu (biar aman)
@@ -111,13 +113,13 @@ if [ "$distro_variant" = "desktop" ]; then
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
 URIs: http://deb.debian.org/debian
-Suites: trixie trixie-updates
+Suites: forky forky-updates
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 URIs: http://security.debian.org/debian-security
-Suites: trixie-security
+Suites: forky-security
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
@@ -130,15 +132,16 @@ EOF
         chroot rootdir apt install -y \
             gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
 
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-97/gnome-shell-mobile.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter/mutter-mobile.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd/gsd-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-debian/gsd-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-debian/gsettings-desktop-schemas_52.0-all.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-debian/mutter-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-debian-115/gnome-shell-mobile.deb
 
 
         cp ./*.deb rootdir/tmp/
         chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
         
-        chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
+        chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon gsettings-desktop-schemas
 
         chroot rootdir systemctl enable gdm3
     fi
@@ -177,9 +180,9 @@ fi
 # =========================
 
 if [ "$MODE" = "dual" ]; then
-    echo "PARTLABEL=linux / ext4 defaults 0 1" > rootdir/etc/fstab
+    echo "PARTLABEL=linux / ext4 defaults,x-systemd.growfs 0 1" > rootdir/etc/fstab
 else
-    echo "PARTLABEL=userdata / ext4 defaults 0 1" > rootdir/etc/fstab
+    echo "PARTLABEL=userdata / ext4 defaults,x-systemd.growfs 0 1" > rootdir/etc/fstab
 fi
 
 # clean

@@ -18,7 +18,7 @@ export OBJDUMP="llvm-objdump"
 export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
-git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.1.3-thp-wip --depth 1 linux
+git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.1.5 --depth 1 linux
 cd linux
 
 # MIPPS
@@ -73,6 +73,27 @@ ukify build \
   --devicetree=arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dtb \
   --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw" \
   --output=../bootaa64.efi
+
+# =========================
+# Build ESP IMG (FAT32) containing EFI/BOOT/bootaa64.efi
+# =========================
+ESP_IMG=../esp_sheng.img
+EFI_FILE=../bootaa64.efi
+
+# Calculate image size: EFI file size + 1MB overhead, rounded up to nearest MB
+EFI_SIZE_KB=$(( ($(stat -c%s "$EFI_FILE") / 1024) + 1 ))
+IMG_SIZE_KB=$(( EFI_SIZE_KB + 1024 ))
+
+# Create empty image and format as FAT32
+dd if=/dev/zero of="$ESP_IMG" bs=1K count="$IMG_SIZE_KB"
+mformat -i "$ESP_IMG" -F ::
+
+# Create EFI/BOOT directory structure and copy bootaa64.efi
+mmd -i "$ESP_IMG" ::EFI
+mmd -i "$ESP_IMG" ::EFI/BOOT
+mcopy -i "$ESP_IMG" "$EFI_FILE" ::EFI/BOOT/bootaa64.efi
+
+echo "ESP image created: $ESP_IMG"
 
 #rm $1/linux-xiaomi-sheng/usr/dummy
 
