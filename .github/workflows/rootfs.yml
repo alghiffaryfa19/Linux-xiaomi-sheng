@@ -7,15 +7,23 @@ on:
         description: "内核版本 (对应Release标签，如 7.1.5)"
         required: true
         default: "7.1.5"
+      username:
+        description: "New username"
+        required: true
+        default: "xiaomi-sheng"
+      password:
+        description: "Password for the new user"
+        required: true
+        default: "147147"
       build_type:
-        description: "构建类型选择"
+        description: "Type"
         options:
           - desktop-only
         required: true
         type: choice
         default: "all"
       skip_release:
-        description: "跳过创建GitHub Release"
+        description: "GitHub Release"
         required: false
         type: boolean
         default: false
@@ -156,6 +164,8 @@ jobs:
         id: build_rootfs
         run: |
           DISTRO="${{ matrix.distro }}"
+          USERNAME="${{ github.event.inputs.username }}"
+          PASSWORD="${{ github.event.inputs.password }}"
           KERNEL_VER="${{ needs.prepare-release.outputs.kernel_version }}"
 
           echo "========================================"
@@ -169,7 +179,7 @@ jobs:
 
           # 赋予执行权限并执行构建脚本
           chmod +x sheng-rootfs_build.sh
-          sudo bash ./sheng-rootfs_build.sh "$DISTRO" "$KERNEL_VER"
+          sudo bash ./sheng-rootfs_build.sh "$DISTRO" "$KERNEL_VER" "$USERNAME" "$PASSWORD"
 
           # 检查构建结果 - 查找动态生成的压缩包
           # 查找所有.7z文件

@@ -15,6 +15,8 @@ fi
 
 DISTRO=$1
 KERNEL=$2
+USERNAME=$3
+PASSWORD=$4
 
 distro_type=$(echo "$DISTRO" | cut -d'-' -f1)
 distro_variant=$(echo "$DISTRO" | cut -d'-' -f2)
@@ -24,7 +26,7 @@ if [ "$distro_type" != "debian" ]; then
     exit 1
 fi
 
-distro_version="forky"
+distro_version="trixie"
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
@@ -113,13 +115,13 @@ if [ "$distro_variant" = "desktop" ]; then
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
 URIs: http://deb.debian.org/debian
-Suites: forky forky-updates
+Suites: trixie trixie-updates
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 URIs: http://security.debian.org/debian-security
-Suites: forky-security
+Suites: trixie-security
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
@@ -132,31 +134,30 @@ EOF
         chroot rootdir apt install -y \
             gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
 
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-debian/gsd-mobile.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-debian/gsettings-desktop-schemas_52.0-all.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-debian/mutter-mobile.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-debian-115/gnome-shell-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-48/gnome-shell-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-48/mutter-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd-48/gsd-mobile.deb
 
 
         cp ./*.deb rootdir/tmp/
         chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
         
-        chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon gsettings-desktop-schemas
+        chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
     fi
 
     # user
-    chroot rootdir useradd -m -s /bin/bash luser
-    echo "luser:luser" | chroot rootdir chpasswd
-    chroot rootdir usermod -aG sudo luser
+    chroot rootdir useradd -m -s /bin/bash $USERNAME
+    echo "$USERNAME:$PASSWORD" | chroot rootdir chpasswd
+    chroot rootdir usermod -aG sudo $USERNAME
 
     # autologin
     if [ "$FLAVOUR" = "lomiri" ]; then
         mkdir -p rootdir/etc/lightdm/lightdm.conf.d
         cat > rootdir/etc/lightdm/lightdm.conf.d/50-autologin.conf <<EOF
 [Seat:*]
-autologin-user=luser
+autologin-user=$USERNAME
 autologin-user-timeout=0
 user-session=lomiri
 greeter-session=lightdm-gtk-greeter
@@ -167,7 +168,7 @@ EOF
         cat > rootdir/etc/gdm3/daemon.conf <<EOF
 [daemon]
 AutomaticLoginEnable=true
-AutomaticLogin=luser
+AutomaticLogin=$USERNAME
 EOF
     fi
 
