@@ -71,7 +71,7 @@ mv Image.gz-dtb_sheng zImage_sheng
 ukify build \
   --linux=arch/arm64/boot/Image \
   --devicetree=arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dtb \
-  --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw" \
+  --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw memmap=72M\$0x9ea00000" \
   --output=../bootaa64.efi
 
 # =========================
