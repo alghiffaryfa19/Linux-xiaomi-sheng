@@ -26,7 +26,7 @@ if [ "$distro_type" != "debian" ]; then
     exit 1
 fi
 
-distro_version="forky"
+distro_version="trixie"
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
@@ -114,13 +114,13 @@ if [ "$distro_variant" = "desktop" ]; then
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
 URIs: http://deb.debian.org/debian
-Suites: forky forky-updates
+Suites: trixie trixie-updates
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 URIs: http://security.debian.org/debian-security
-Suites: forky-security
+Suites: trixie-security
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
