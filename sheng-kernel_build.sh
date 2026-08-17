@@ -26,6 +26,7 @@ cd linux
 # git apply *patch
 # rm *patch
 
+sed -i 's/devm_ioremap_resource_wc(pas->dev, &res)/devm_ioremap_wc(pas->dev, res.start, resource_size(\&res)) ?: ERR_PTR(-EBUSY)/g' drivers/remoteproc/qcom_q6v5_pas.c
 cp ../sm8550.config .config
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1
@@ -71,7 +72,7 @@ mv Image.gz-dtb_sheng zImage_sheng
 ukify build \
   --linux=arch/arm64/boot/Image \
   --devicetree=arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dtb \
-  --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw memmap=72M\$0x9ea00000" \
+  --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw" \
   --output=../bootaa64.efi
 
 # =========================
