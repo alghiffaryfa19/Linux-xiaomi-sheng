@@ -26,12 +26,12 @@ if [ "$distro_type" != "debian" ]; then
     exit 1
 fi
 
-distro_version="trixie"
+distro_version="forky"
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # 🔥 MULTI FLAVOUR
-FLAVOURS=("gnome")
+FLAVOURS=("plasma-mobile")
 BOOTMODES=("dual")
 
 for FLAVOUR in "${FLAVOURS[@]}"; do
@@ -102,26 +102,25 @@ echo "xiaomi-$FLAVOUR-$MODE" > rootdir/etc/hostname
 # =========================
 if [ "$distro_variant" = "desktop" ]; then
 
-    if [ "$FLAVOUR" = "lomiri" ]; then
+    if [ "$FLAVOUR" = "plasma-mobile" ]; then
         chroot rootdir apt install -y \
-            lomiri lomiri-desktop-session lomiri-system-settings \
-            lightdm lightdm-gtk-greeter firefox-esr
+            plasma-mobile konsole sddm firefox-esr
 
         chroot rootdir systemctl disable gdm3 2>/dev/null || true
-        chroot rootdir systemctl enable lightdm
+        chroot rootdir systemctl enable sddm
 
     elif [ "$FLAVOUR" = "gnome" ]; then
     
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
 URIs: http://deb.debian.org/debian
-Suites: trixie trixie-updates
+Suites: forky forky-updates
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 URIs: http://security.debian.org/debian-security
-Suites: trixie-security
+Suites: forky-security
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
