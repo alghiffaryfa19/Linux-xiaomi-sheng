@@ -27,6 +27,8 @@ cd linux
 # rm *patch
 
 sed -i 's/devm_ioremap_resource_wc(pas->dev, &res)/devm_ioremap_wc(pas->dev, res.start, resource_size(\&res)) ?: ERR_PTR(-EBUSY)/g' drivers/remoteproc/qcom_q6v5_pas.c
+sed -i '/bootmem_init();/i \	memblock_remove(0x9ea00000, 0x04680000);' arch/arm64/kernel/setup.c
+
 cp ../sm8550.config .config
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1
