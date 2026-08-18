@@ -25,45 +25,6 @@ cd linux
 # wget https://github.com/code002-2/sm8550-mainline/commit/57512186fc43a902e38945da91c656dc36400362.patch
 # git apply *patch
 # rm *patch
-
-# WORKAROUND: Fix ADSP EBUSY on UEFI boot (DuoWoA EFI memory map overlap)
-# The UEFI firmware marks the ADSP reserved memory region as System RAM in iomem,
-# causing devm_request_mem_region() inside devm_ioremap_resource_wc() to fail with
-# -EBUSY. This patch adds a fallback: on EBUSY, release the conflicting "System RAM"
-# resource and retry, so the ADSP driver can claim the region.
-cat > /tmp/adsp_ebusy_fix.patch << 'PATCH_EOF'
---- a/lib/devres.c
-+++ b/lib/devres.c
-@@ -153,8 +153,19 @@ static void __iomem *__devm_ioremap_resource(struct device *dev,
- 		pretty_name = devm_kstrdup(dev, dev_name(dev), GFP_KERNEL);
- 	if (!pretty_name) {
- 		ret = dev_err_probe(dev, -ENOMEM, "can't generate pretty name for resource %pR\n", res);
- 		return IOMEM_ERR_PTR(ret);
- 	}
- 
- 	if (!devm_request_mem_region(dev, res->start, size, pretty_name)) {
--		ret = dev_err_probe(dev, -EBUSY, "can't request region for resource %pR\n", res);
--		return IOMEM_ERR_PTR(ret);
-+		/*
-+		 * On some UEFI platforms (e.g. DuoWoA), the EFI memory map
-+		 * incorrectly marks reserved firmware memory as conventional
-+		 * RAM, creating a "System RAM" iomem resource that conflicts.
-+		 * Try releasing the conflict and retrying once before giving up.
-+		 */
-+		release_mem_region(res->start, size);
-+		if (!devm_request_mem_region(dev, res->start, size, pretty_name)) {
-+			ret = dev_err_probe(dev, -EBUSY,
-+					    "can't request region for resource %pR\n", res);
-+			return IOMEM_ERR_PTR(ret);
-+		}
-+		dev_warn(dev, "released conflicting resource for %pR\n", res);
- 	}
- 
- 	dest_ptr = __devm_ioremap(dev, res->start, size, type);
-PATCH_EOF
-git apply /tmp/adsp_ebusy_fix.patch || { echo "WARN: patch did not apply cleanly, trying with --no-check"; git apply --no-check /tmp/adsp_ebusy_fix.patch; }
-
-
 cp ../sm8550.config .config
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1
@@ -103,8 +64,8 @@ install -Dm644 Image.gz-dtb_sheng \
     $PKGDIR/boot/Image.gz-dtb_sheng
 
 mv Image.gz-dtb_sheng zImage_sheng
-../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=linux" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_dualboot.img
-../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
+../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=linux rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_dualboot.img
+../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
 
 ukify build \
   --linux=arch/arm64/boot/Image \
