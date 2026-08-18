@@ -26,12 +26,12 @@ if [ "$distro_type" != "debian" ]; then
     exit 1
 fi
 
-distro_version="forky"
+distro_version="trixie"
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # 🔥 MULTI FLAVOUR
-FLAVOURS=("phosh")
+FLAVOURS=("gnome-shell-mobile")
 BOOTMODES=("dual")
 
 for FLAVOUR in "${FLAVOURS[@]}"; do
@@ -109,18 +109,18 @@ if [ "$distro_variant" = "desktop" ]; then
         chroot rootdir systemctl disable gdm3 2>/dev/null || true
         chroot rootdir systemctl enable sddm
 
-    elif [ "$FLAVOUR" = "phosh" ]; then
+    elif [ "$FLAVOUR" = "gnome-shell-mobile" ]; then
     
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
 URIs: http://deb.debian.org/debian
-Suites: forky forky-updates
+Suites: trixie trixie-updates
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb deb-src
 URIs: http://security.debian.org/debian-security
-Suites: forky-security
+Suites: trixie-security
 Components: main
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
@@ -129,25 +129,25 @@ EOF
 
         chroot rootdir apt update
 
-        #chroot rootdir apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
+        chroot rootdir apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
         chroot rootdir apt install -y \
-            phosh-tablet gnome-console gdm3 firefox-esr
+            gnome-shell gnome-session gnome-terminal gdm3 firefox-esr gnome-console
 
-        #wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-48/gnome-shell-mobile.deb
-        #wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-48/mutter-mobile.deb
-        #wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd-48/gsd-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-48/gnome-shell-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-48/mutter-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd-48/gsd-mobile.deb
 
         
 
-        #cp ./*.deb rootdir/tmp/
-        #chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
+        cp ./*.deb rootdir/tmp/
+        chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
         
-        #chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
+        chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
 
-        #git clone https://github.com/phildevprog/force-phone-mode.git rootdir/.local/share/gnome-shell/extensions/force-phone-mode@phildevprog.com
-        #chroot rootdir gnome-extensions enable force-phone-mode@phildevprog.com
+        git clone https://github.com/phildevprog/force-phone-mode.git rootdir/.local/share/gnome-shell/extensions/force-phone-mode@phildevprog.com
+        chroot rootdir gnome-extensions enable force-phone-mode@phildevprog.com
         
     fi
 
