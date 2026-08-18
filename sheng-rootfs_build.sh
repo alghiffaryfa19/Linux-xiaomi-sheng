@@ -31,7 +31,7 @@ distro_version="trixie"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # 🔥 MULTI FLAVOUR
-FLAVOURS=("plasma-mobile")
+FLAVOURS=("gnome-shell-mobile")
 BOOTMODES=("dual")
 
 for FLAVOUR in "${FLAVOURS[@]}"; do
@@ -109,7 +109,7 @@ if [ "$distro_variant" = "desktop" ]; then
         chroot rootdir systemctl disable gdm3 2>/dev/null || true
         chroot rootdir systemctl enable sddm
 
-    elif [ "$FLAVOUR" = "gnome" ]; then
+    elif [ "$FLAVOUR" = "gnome-shell-mobile" ]; then
     
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
@@ -137,6 +137,7 @@ EOF
         wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-48/mutter-mobile.deb
         wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd-48/gsd-mobile.deb
 
+        
 
         cp ./*.deb rootdir/tmp/
         chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
@@ -144,6 +145,10 @@ EOF
         chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
+
+        git clone https://github.com/phildevprog/force-phone-mode.git rootdir/.local/share/gnome-shell/extensions/force-phone-mode@phildevprog.com
+        chroot rootdir gnome-extensions enable force-phone-mode@phildevprog.com
+        
     fi
 
     # user
