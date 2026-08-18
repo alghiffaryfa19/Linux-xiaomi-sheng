@@ -26,8 +26,43 @@ cd linux
 # git apply *patch
 # rm *patch
 
-sed -i 's/devm_ioremap_resource_wc(pas->dev, &res)/devm_ioremap_wc(pas->dev, res.start, resource_size(\&res)) ?: ERR_PTR(-EBUSY)/g' drivers/remoteproc/qcom_q6v5_pas.c
-sed -i '/bootmem_init();/i \	memblock_remove(0x9ea00000, 0x04680000);' arch/arm64/kernel/setup.c
+# WORKAROUND: Fix ADSP EBUSY on UEFI boot (DuoWoA EFI memory map overlap)
+# The UEFI firmware marks the ADSP reserved memory region as System RAM in iomem,
+# causing devm_request_mem_region() inside devm_ioremap_resource_wc() to fail with
+# -EBUSY. This patch adds a fallback: on EBUSY, release the conflicting "System RAM"
+# resource and retry, so the ADSP driver can claim the region.
+cat > /tmp/adsp_ebusy_fix.patch << 'PATCH_EOF'
+--- a/lib/devres.c
++++ b/lib/devres.c
+@@ -153,8 +153,19 @@ static void __iomem *__devm_ioremap_resource(struct device *dev,
+ 		pretty_name = devm_kstrdup(dev, dev_name(dev), GFP_KERNEL);
+ 	if (!pretty_name) {
+ 		ret = dev_err_probe(dev, -ENOMEM, "can't generate pretty name for resource %pR\n", res);
+ 		return IOMEM_ERR_PTR(ret);
+ 	}
+ 
+ 	if (!devm_request_mem_region(dev, res->start, size, pretty_name)) {
+-		ret = dev_err_probe(dev, -EBUSY, "can't request region for resource %pR\n", res);
+-		return IOMEM_ERR_PTR(ret);
++		/*
++		 * On some UEFI platforms (e.g. DuoWoA), the EFI memory map
++		 * incorrectly marks reserved firmware memory as conventional
++		 * RAM, creating a "System RAM" iomem resource that conflicts.
++		 * Try releasing the conflict and retrying once before giving up.
++		 */
++		release_mem_region(res->start, size);
++		if (!devm_request_mem_region(dev, res->start, size, pretty_name)) {
++			ret = dev_err_probe(dev, -EBUSY,
++					    "can't request region for resource %pR\n", res);
++			return IOMEM_ERR_PTR(ret);
++		}
++		dev_warn(dev, "released conflicting resource for %pR\n", res);
+ 	}
+ 
+ 	dest_ptr = __devm_ioremap(dev, res->start, size, type);
+PATCH_EOF
+git apply /tmp/adsp_ebusy_fix.patch || { echo "WARN: patch did not apply cleanly, trying with --no-check"; git apply --no-check /tmp/adsp_ebusy_fix.patch; }
+
 
 cp ../sm8550.config .config
 
