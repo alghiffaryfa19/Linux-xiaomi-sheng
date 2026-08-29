@@ -37,6 +37,16 @@ PKGDIR=../linux-xiaomi-sheng
 ARCH=arm64
 
 # =========================
+# Systemd fast shutdown config (wait n see)
+# =========================
+#mkdir -p $PKGDIR/etc/systemd/system.conf.d
+#cat <<EOF > $PKGDIR/etc/systemd/system.conf.d/99-fast-shutdown.conf
+#[Manager]
+#DefaultTimeoutStopSec=10s
+#DefaultTimeoutAbortSec=10s
+#EOF
+
+# =========================
 # Install kernel images
 # =========================
 mkdir -p $PKGDIR/boot
