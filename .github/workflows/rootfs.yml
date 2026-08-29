@@ -4,18 +4,26 @@ on:
   workflow_dispatch:
     inputs:
       kernel_version:
-        description: '内核版本 (对应Release标签，如 7.1)'
+        description: "内核版本 (对应Release标签，如 7.1.5)"
         required: true
-        default: '7.1'
+        default: "7.1.5"
+      username:
+        description: "New username"
+        required: true
+        default: "xiaomi-sheng"
+      password:
+        description: "Password for the new user"
+        required: true
+        default: "147147"
       build_type:
-        description: '构建类型选择'
+        description: "Type"
         options:
           - desktop-only
         required: true
         type: choice
-        default: 'all'
+        default: "all"
       skip_release:
-        description: '跳过创建GitHub Release'
+        description: "GitHub Release"
         required: false
         type: boolean
         default: false
@@ -30,76 +38,76 @@ jobs:
       release_tag: ${{ steps.generate_tag.outputs.release_tag }}
       kernel_version: ${{ steps.kernel_version.outputs.kernel_version }}
     steps:
-    - name: "📦 获取内核版本"
-      id: kernel_version
-      run: |
-        KERNEL_VER=${{ github.event.inputs.kernel_version || '7.1' }}
-        echo "kernel_version=$KERNEL_VER" >> $GITHUB_OUTPUT
+      - name: "📦 获取内核版本"
+        id: kernel_version
+        run: |
+          KERNEL_VER=${{ github.event.inputs.kernel_version || '7.1.5' }}
+          echo "kernel_version=$KERNEL_VER" >> $GITHUB_OUTPUT
 
-    - name: "🏷️ 生成版本标签"
-      id: generate_tag
-      run: |
-        DATE_TAG=$(date -u '+%Y%m%d')
-        KERNEL_REF="${{ steps.kernel_version.outputs.kernel_version }}"
-        SHORT_SHA="${GITHUB_SHA:0:8}"
-        RELEASE_TAG="rootfs-$DATE_TAG-$KERNEL_REF-$SHORT_SHA"
-        echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+      - name: "🏷️ 生成版本标签"
+        id: generate_tag
+        run: |
+          DATE_TAG=$(date -u '+%Y%m%d')
+          KERNEL_REF="${{ steps.kernel_version.outputs.kernel_version }}"
+          SHORT_SHA="${GITHUB_SHA:0:8}"
+          RELEASE_TAG="rootfs-$DATE_TAG-$KERNEL_REF-$SHORT_SHA"
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
-    - name: "📄 提前创建GitHub Release"
-      if: ${{ !github.event.inputs.skip_release }}
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.generate_tag.outputs.release_tag }}
-        name: "Ubuntu/Debian for Sheng - ${{ steps.generate_tag.outputs.release_tag }}"
-        body: |
-          🐧 Ubuntu/Debian for Sheng
-          
-          --- 
-          
-          ### 📋 构建信息
-          | 项目 | 详情 |
-          |------|------|
-          | 内核版本 | ${{ steps.kernel_version.outputs.kernel_version }} |
-          | 构建SHA | [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |
-          | 构建类型 | ${{ github.event.inputs.build_type || 'all' }} |
-          | 包含变体 | ${{ 
-              github.event.inputs.build_type == 'server-only' && 'Debian Server, Ubuntu Server' ||
-              github.event.inputs.build_type == 'desktop-only' && 'Debian Desktop, Ubuntu Desktop' ||
-              'Debian Server/Desktop, Ubuntu Server/Desktop'
-            }} |
-          | 总大小 | 构建中... |
-          
-          --- 
-          
-          ### 🔐 默认凭据
-          
-          **服务器版**
-          - 用户名: `root`
-          - 密码: `1234` (首次登录后请立即修改！)
-          
-          **桌面版**
-          - 用户名: `luser`
-          - 密码: `luser`
-          - 自动登录: 已启用
-          - 桌面环境: GNOME + LightDM
-          
-          --- 
-          
-          ### 🛡️ 安全建议
-          1. 首次登录后立即修改默认密码
-          2. 禁用root远程登录（可选）
-          3. 配置防火墙规则
+      - name: "📄 提前创建GitHub Release"
+        if: ${{ !github.event.inputs.skip_release }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.generate_tag.outputs.release_tag }}
+          name: "Ubuntu/Debian for Sheng - ${{ steps.generate_tag.outputs.release_tag }}"
+          body: |
+            🐧 Ubuntu/Debian for Sheng
 
-          --- 
-          
-          ### 📦 镜像文件
-          构建中...
-        draft: false
-        prerelease: false
-        files: ""
-        generate_release_notes: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            --- 
+
+            ### 📋 构建信息
+            | 项目 | 详情 |
+            |------|------|
+            | 内核版本 | ${{ steps.kernel_version.outputs.kernel_version }} |
+            | 构建SHA | [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) |
+            | 构建类型 | ${{ github.event.inputs.build_type || 'all' }} |
+            | 包含变体 | ${{ 
+                github.event.inputs.build_type == 'server-only' && 'Debian Server, Ubuntu Server' ||
+                github.event.inputs.build_type == 'desktop-only' && 'Debian Desktop, Ubuntu Desktop' ||
+                'Debian Server/Desktop, Ubuntu Server/Desktop'
+              }} |
+            | 总大小 | 构建中... |
+
+            --- 
+
+            ### 🔐 默认凭据
+
+            **服务器版**
+            - 用户名: `root`
+            - 密码: `1234` (首次登录后请立即修改！)
+
+            **桌面版**
+            - 用户名: `luser`
+            - 密码: `luser`
+            - 自动登录: 已启用
+            - 桌面环境: GNOME + LightDM
+
+            --- 
+
+            ### 🛡️ 安全建议
+            1. 首次登录后立即修改默认密码
+            2. 禁用root远程登录（可选）
+            3. 配置防火墙规则
+
+            --- 
+
+            ### 📦 镜像文件
+            构建中...
+          draft: false
+          prerelease: false
+          files: ""
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-rootfs:
     name: "🏗️ 构建 - ${{ matrix.distro }}"
@@ -117,120 +125,122 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: "📥 检出代码"
-      uses: actions/checkout@v4
+      - name: "📥 检出代码"
+        uses: actions/checkout@v4
 
-    - name: "🔧 安装构建工具"
-      run: |
-        echo "安装必需的系统工具..."
-        sudo apt-get update
-        sudo apt-get install -y \
-          debootstrap \
-          p7zip-full \
-          curl
-        echo "✅ 工具安装完成"
+      - name: "🔧 安装构建工具"
+        run: |
+          echo "安装必需的系统工具..."
+          sudo apt-get update
+          sudo apt-get install -y \
+            debootstrap \
+            p7zip-full \
+            curl
+          echo "✅ 工具安装完成"
 
-    - name: "📥 Download kernel bundle"
-      run: |
-        KERNEL_VER="${{ needs.prepare-release.outputs.kernel_version }}"
+      - name: "📥 Download kernel bundle"
+        run: |
+          KERNEL_VER="${{ needs.prepare-release.outputs.kernel_version }}"
 
-        echo "⬇️ Download bundle kernel-bundle-$KERNEL_VER"
+          echo "⬇️ Download bundle kernel-bundle-$KERNEL_VER"
 
-        gh release download "kernel-bundle-$KERNEL_VER" \
-          --pattern "*.deb" \
-          --repo "${{ github.repository }}" \
-          --clobber
+          gh release download "kernel-bundle-$KERNEL_VER" \
+            --pattern "*.deb" \
+            --repo "${{ github.repository }}" \
+            --clobber
 
-        echo "📂 Downloaded files:"
-        ls -lah *.deb
+          echo "📂 Downloaded files:"
+          ls -lah *.deb
 
-        COUNT=$(ls *.deb | wc -l)
-        if [ "$COUNT" -lt 8 ]; then
-          echo "❌ Package incomplete"
-          exit 1
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COUNT=$(ls *.deb | wc -l)
+          if [ "$COUNT" -lt 8 ]; then
+            echo "❌ Package incomplete"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: "🏗️ 执行RootFS构建"
-      id: build_rootfs
-      run: |
-        DISTRO="${{ matrix.distro }}"
-        KERNEL_VER="${{ needs.prepare-release.outputs.kernel_version }}"
-        
-        echo "========================================"
-        echo "开始构建 RootFS"
-        echo "----------------------------------------"
-        echo "发行版: $DISTRO"
-        echo "内核: $KERNEL_VER"
-        echo "Runner: $(uname -m)"
-        echo "时间: $(date)"
-        echo "========================================"
-        
-        # 赋予执行权限并执行构建脚本
-        chmod +x sheng-rootfs_build.sh
-        sudo bash ./sheng-rootfs_build.sh "$DISTRO" "$KERNEL_VER"
-        
-        # 检查构建结果 - 查找动态生成的压缩包
-        # 查找所有.7z文件
-        SEVEN_Z_FILES=$(find . -name "*.7z" | grep -v "sheng-rootfs_build.sh" | head -10)
-        if [[ -n "$SEVEN_Z_FILES" ]]; then
-          for FILE in $SEVEN_Z_FILES; do
-            FILE_SIZE=$(du -h "$FILE" | cut -f1)
-            echo "✅ 找到构建产物: $FILE ($FILE_SIZE)"
-            echo "final_filename=$(basename "$FILE")" >> $GITHUB_OUTPUT
-            echo "file_path=$FILE" >> $GITHUB_OUTPUT
-            # 检查文件大小
-            FILE_SIZE_KB=$(du -k "$FILE" | cut -f1)
-            FILE_SIZE_GB=$(($FILE_SIZE_KB / 1024 / 1024))
-            echo "file_size_gb=$FILE_SIZE_GB" >> $GITHUB_OUTPUT
-            break
-          done
-        else
-          echo "❌ 错误：未生成任何.7z文件！"
-          ls -la *.7z 2>/dev/null || echo "未找到任何.7z文件"
-          exit 1
-        fi
-        
-        # 检查Boot镜像（所有Server变体）
-        if [[ "$DISTRO" == "*-server" && -f "xiaomi-k20pro-boot.img" ]]; then
-          echo "✅ 找到Boot镜像: xiaomi-k20pro-boot.img"
-          echo "boot_img_exists=true" >> $GITHUB_OUTPUT
-        fi
-      timeout-minutes: 90
+      - name: "🏗️ 执行RootFS构建"
+        id: build_rootfs
+        run: |
+          DISTRO="${{ matrix.distro }}"
+          USERNAME="${{ github.event.inputs.username }}"
+          PASSWORD="${{ github.event.inputs.password }}"
+          KERNEL_VER="${{ needs.prepare-release.outputs.kernel_version }}"
 
-    - name: "📤 上传大文件到Artifact"
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ steps.build_rootfs.outputs.final_filename }}
-        path: ${{ steps.build_rootfs.outputs.file_path }}
-        retention-days: 14
-        if-no-files-found: error
-        compression-level: 0
+          echo "========================================"
+          echo "开始构建 RootFS"
+          echo "----------------------------------------"
+          echo "发行版: $DISTRO"
+          echo "内核: $KERNEL_VER"
+          echo "Runner: $(uname -m)"
+          echo "时间: $(date)"
+          echo "========================================"
 
-    - name: "🚀 直接上传小文件到Release"
-      if: ${{ !github.event.inputs.skip_release && steps.build_rootfs.outputs.file_size_gb < 2 }}
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ env.RELEASE_TAG }}
-        files: ${{ steps.build_rootfs.outputs.file_path }}
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 赋予执行权限并执行构建脚本
+          chmod +x sheng-rootfs_build.sh
+          sudo bash ./sheng-rootfs_build.sh "$DISTRO" "$KERNEL_VER" "$USERNAME" "$PASSWORD"
 
-    - name: "🚀 上传Boot镜像到Release"
-      if: ${{ !github.event.inputs.skip_release && steps.build_rootfs.outputs.boot_img_exists == 'true' }}
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ env.RELEASE_TAG }}
-        files: xiaomi-k20pro-boot.img
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 检查构建结果 - 查找动态生成的压缩包
+          # 查找所有.7z文件
+          SEVEN_Z_FILES=$(find . -name "*.7z" | grep -v "sheng-rootfs_build.sh" | head -10)
+          if [[ -n "$SEVEN_Z_FILES" ]]; then
+            for FILE in $SEVEN_Z_FILES; do
+              FILE_SIZE=$(du -h "$FILE" | cut -f1)
+              echo "✅ 找到构建产物: $FILE ($FILE_SIZE)"
+              echo "final_filename=$(basename "$FILE")" >> $GITHUB_OUTPUT
+              echo "file_path=$FILE" >> $GITHUB_OUTPUT
+              # 检查文件大小
+              FILE_SIZE_KB=$(du -k "$FILE" | cut -f1)
+              FILE_SIZE_GB=$(($FILE_SIZE_KB / 1024 / 1024))
+              echo "file_size_gb=$FILE_SIZE_GB" >> $GITHUB_OUTPUT
+              break
+            done
+          else
+            echo "❌ 错误：未生成任何.7z文件！"
+            ls -la *.7z 2>/dev/null || echo "未找到任何.7z文件"
+            exit 1
+          fi
 
-  update-release: 
+          # 检查Boot镜像（所有Server变体）
+          if [[ "$DISTRO" == "*-server" && -f "xiaomi-k20pro-boot.img" ]]; then
+            echo "✅ 找到Boot镜像: xiaomi-k20pro-boot.img"
+            echo "boot_img_exists=true" >> $GITHUB_OUTPUT
+          fi
+        timeout-minutes: 90
+
+      - name: "📤 上传大文件到Artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build_rootfs.outputs.final_filename }}
+          path: ${{ steps.build_rootfs.outputs.file_path }}
+          retention-days: 14
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: "🚀 直接上传小文件到Release"
+        if: ${{ !github.event.inputs.skip_release && steps.build_rootfs.outputs.file_size_gb < 2 }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: ${{ steps.build_rootfs.outputs.file_path }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🚀 上传Boot镜像到Release"
+        if: ${{ !github.event.inputs.skip_release && steps.build_rootfs.outputs.boot_img_exists == 'true' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: xiaomi-k20pro-boot.img
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-release:
     name: "📝 更新Release信息"
     runs-on: ubuntu-24.04-arm
     needs: [prepare-release, build-rootfs]
@@ -238,31 +248,31 @@ jobs:
       contents: write
     if: ${{ !github.event.inputs.skip_release }}
     steps:
-    - name: "📝 更新Release信息"
-      run: |
-        # 生成文件列表
-        echo "### 📦 包含的镜像文件" > filelist.md
-        echo "" >> filelist.md
-        
-        # 查找所有上传到Release的小文件（通过GitHub API）
-        echo "🔍 获取Release资产列表..."
-        gh release view ${{ needs.prepare-release.outputs.release_tag }} --json assets --jq '.assets[].name' > release_assets.txt 2>/dev/null || echo "" > release_assets.txt
-        
-        # 添加小文件到列表
-        while read -r asset; do
-          if [[ -n "$asset" ]]; then
-            echo "- **$asset**" >> filelist.md
-          fi
-        done < release_assets.txt
-        
-        # 读取当前Release描述
-        CURRENT_BODY=$(gh release view ${{ needs.prepare-release.outputs.release_tag }} --json body --jq '.body')
-        
-        # 更新Release描述，替换镜像文件部分
-        NEW_BODY=$(echo "$CURRENT_BODY" | sed '/### 📦 镜像文件/,/---/c\### 📦 镜像文件\n'$(cat filelist.md | sed 's/\//\\\//g' | sed 's/&/\\&/g' | tr '\n' '\n'))
-        
-        # 更新Release
-        echo "📝 更新Release信息..."
-        gh release edit ${{ needs.prepare-release.outputs.release_tag }} --body "$NEW_BODY"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "📝 更新Release信息"
+        run: |
+          # 生成文件列表
+          echo "### 📦 包含的镜像文件" > filelist.md
+          echo "" >> filelist.md
+
+          # 查找所有上传到Release的小文件（通过GitHub API）
+          echo "🔍 获取Release资产列表..."
+          gh release view ${{ needs.prepare-release.outputs.release_tag }} --json assets --jq '.assets[].name' > release_assets.txt 2>/dev/null || echo "" > release_assets.txt
+
+          # 添加小文件到列表
+          while read -r asset; do
+            if [[ -n "$asset" ]]; then
+              echo "- **$asset**" >> filelist.md
+            fi
+          done < release_assets.txt
+
+          # 读取当前Release描述
+          CURRENT_BODY=$(gh release view ${{ needs.prepare-release.outputs.release_tag }} --json body --jq '.body')
+
+          # 更新Release描述，替换镜像文件部分
+          NEW_BODY=$(echo "$CURRENT_BODY" | sed '/### 📦 镜像文件/,/---/c\### 📦 镜像文件\n'$(cat filelist.md | sed 's/\//\\\//g' | sed 's/&/\\&/g' | tr '\n' '\n'))
+
+          # 更新Release
+          echo "📝 更新Release信息..."
+          gh release edit ${{ needs.prepare-release.outputs.release_tag }} --body "$NEW_BODY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

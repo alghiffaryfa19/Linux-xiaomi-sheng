@@ -18,14 +18,13 @@ export OBJDUMP="llvm-objdump"
 export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
-git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.1.3-thp-wip --depth 1 linux
+git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.1.5 --depth 1 linux
 cd linux
 
 # MIPPS
 # wget https://github.com/code002-2/sm8550-mainline/commit/57512186fc43a902e38945da91c656dc36400362.patch
 # git apply *patch
 # rm *patch
-
 cp ../sm8550.config .config
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1
@@ -65,14 +64,35 @@ install -Dm644 Image.gz-dtb_sheng \
     $PKGDIR/boot/Image.gz-dtb_sheng
 
 mv Image.gz-dtb_sheng zImage_sheng
-../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=linux" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_dualboot.img
-../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
+../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=linux rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_dualboot.img
+../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
 
 ukify build \
   --linux=arch/arm64/boot/Image \
   --devicetree=arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dtb \
   --cmdline="console=tty0 root=PARTLABEL=linux rootwait rw" \
   --output=../bootaa64.efi
+
+# =========================
+# Build ESP IMG (FAT32) containing EFI/BOOT/bootaa64.efi
+# =========================
+ESP_IMG=../esp_sheng.img
+EFI_FILE=../bootaa64.efi
+
+# Calculate image size: EFI file size + 1MB overhead, rounded up to nearest MB
+EFI_SIZE_KB=$(( ($(stat -c%s "$EFI_FILE") / 1024) + 1 ))
+IMG_SIZE_KB=$(( EFI_SIZE_KB + 1024 ))
+
+# Create empty image and format as FAT32
+dd if=/dev/zero of="$ESP_IMG" bs=1K count="$IMG_SIZE_KB"
+mformat -i "$ESP_IMG" -F ::
+
+# Create EFI/BOOT directory structure and copy bootaa64.efi
+mmd -i "$ESP_IMG" ::EFI
+mmd -i "$ESP_IMG" ::EFI/BOOT
+mcopy -i "$ESP_IMG" "$EFI_FILE" ::EFI/BOOT/bootaa64.efi
+
+echo "ESP image created: $ESP_IMG"
 
 #rm $1/linux-xiaomi-sheng/usr/dummy
 

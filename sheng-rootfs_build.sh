@@ -15,6 +15,8 @@ fi
 
 DISTRO=$1
 KERNEL=$2
+USERNAME=$3
+PASSWORD=$4
 
 distro_type=$(echo "$DISTRO" | cut -d'-' -f1)
 distro_variant=$(echo "$DISTRO" | cut -d'-' -f2)
@@ -29,7 +31,7 @@ distro_version="trixie"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # 🔥 MULTI FLAVOUR
-FLAVOURS=("gnome")
+FLAVOURS=("gnome-shell-mobile")
 BOOTMODES=("dual")
 
 for FLAVOUR in "${FLAVOURS[@]}"; do
@@ -70,7 +72,9 @@ echo "📦 Installing device-specific .deb packages..."
 
 # Copy semua .deb ke rootfs
 wget https://github.com/ianchb/xiaomi-mipps-auth/releases/download/0.21/xiaomi-mipps-auth_0.21_arm64.deb
-wget https://github.com/ianchb/xiaomi-sheng-thp/releases/download/v0.3.0/xiaomi-sheng-thp_0.3.0_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-thp/releases/download/v0.3.9/xiaomi-sheng-thp_0.3.9_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-fingerprint/releases/download/v0.1.4/xiaomi-sheng-fingerprint_0.1.4_arm64.deb
+wget https://github.com/ianchb/xiaomi-sheng-keyboard-helper/releases/download/v0.2.0/xiaomi-sheng-keyboard-helper_0.2.0_arm64.deb
 cp *.deb rootdir/tmp/
 
 # Install dependency dulu (biar aman)
@@ -84,7 +88,7 @@ chroot rootdir apt install -y \
 # debug
 ls -lah rootdir/tmp/
 
-chroot rootdir bash -c "apt update && apt install -y /tmp/*.deb" || exit 1
+chroot rootdir bash -c 'apt update && apt install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb' || exit 1
 
 echo "✅ All custom .deb installed"
 
@@ -98,15 +102,14 @@ echo "xiaomi-$FLAVOUR-$MODE" > rootdir/etc/hostname
 # =========================
 if [ "$distro_variant" = "desktop" ]; then
 
-    if [ "$FLAVOUR" = "lomiri" ]; then
+    if [ "$FLAVOUR" = "plasma-mobile" ]; then
         chroot rootdir apt install -y \
-            lomiri lomiri-desktop-session lomiri-system-settings \
-            lightdm lightdm-gtk-greeter firefox-esr
+            plasma-mobile konsole sddm firefox-esr
 
         chroot rootdir systemctl disable gdm3 2>/dev/null || true
-        chroot rootdir systemctl enable lightdm
+        chroot rootdir systemctl enable sddm
 
-    elif [ "$FLAVOUR" = "gnome" ]; then
+    elif [ "$FLAVOUR" = "gnome-shell-mobile" ]; then
     
         cat > rootdir/etc/apt/sources.list.d/debian.sources <<EOF
 Types: deb deb-src
@@ -128,12 +131,13 @@ EOF
 
         chroot rootdir apt-get build-dep -y gnome-shell mutter gnome-settings-daemon
         chroot rootdir apt install -y \
-            gnome-shell gnome-session gnome-terminal gdm3 firefox-esr
+            gnome-shell gnome-session gnome-terminal gdm3 firefox-esr gnome-console
 
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-97/gnome-shell-mobile.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter/mutter-mobile.deb
-        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd/gsd-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gnome-shell-48/gnome-shell-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/mutter-48/mutter-mobile.deb
+        wget https://github.com/alghiffaryfa19/gnome-shell-mobile-builder/releases/download/gsd-48/gsd-mobile.deb
 
+        
 
         cp ./*.deb rootdir/tmp/
         chroot rootdir bash -c 'apt-get install -y --allow-downgrades -o Dpkg::Options::="--force-overwrite" /tmp/*.deb'
@@ -141,19 +145,23 @@ EOF
         chroot rootdir apt-mark hold gnome-shell mutter gnome-settings-daemon
 
         chroot rootdir systemctl enable gdm3
+
+        git clone https://github.com/phildevprog/force-phone-mode.git rootdir/.local/share/gnome-shell/extensions/force-phone-mode@phildevprog.com
+        chroot rootdir gnome-extensions enable force-phone-mode@phildevprog.com
+        
     fi
 
     # user
-    chroot rootdir useradd -m -s /bin/bash luser
-    echo "luser:luser" | chroot rootdir chpasswd
-    chroot rootdir usermod -aG sudo luser
+    chroot rootdir useradd -m -s /bin/bash $USERNAME
+    echo "$USERNAME:$PASSWORD" | chroot rootdir chpasswd
+    chroot rootdir usermod -aG sudo $USERNAME
 
     # autologin
     if [ "$FLAVOUR" = "lomiri" ]; then
         mkdir -p rootdir/etc/lightdm/lightdm.conf.d
         cat > rootdir/etc/lightdm/lightdm.conf.d/50-autologin.conf <<EOF
 [Seat:*]
-autologin-user=luser
+autologin-user=$USERNAME
 autologin-user-timeout=0
 user-session=lomiri
 greeter-session=lightdm-gtk-greeter
@@ -164,7 +172,7 @@ EOF
         cat > rootdir/etc/gdm3/daemon.conf <<EOF
 [daemon]
 AutomaticLoginEnable=true
-AutomaticLogin=luser
+AutomaticLogin=$USERNAME
 EOF
     fi
 
@@ -177,9 +185,9 @@ fi
 # =========================
 
 if [ "$MODE" = "dual" ]; then
-    echo "PARTLABEL=linux / ext4 defaults 0 1" > rootdir/etc/fstab
+    echo "PARTLABEL=linux / ext4 defaults,x-systemd.growfs 0 1" > rootdir/etc/fstab
 else
-    echo "PARTLABEL=userdata / ext4 defaults 0 1" > rootdir/etc/fstab
+    echo "PARTLABEL=userdata / ext4 defaults,x-systemd.growfs 0 1" > rootdir/etc/fstab
 fi
 
 # clean
