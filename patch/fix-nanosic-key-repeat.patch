@@ -1,0 +1,137 @@
+diff --git a/arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dts b/arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dts
+index 0d8c3ebde..90725ad41 100644
+--- a/arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dts
++++ b/arch/arm64/boot/dts/qcom/sm8550-xiaomi-sheng.dts
+@@ -1197,6 +1197,7 @@ cs35l43_brl: cs35l43@42 {
+ };
+ 
+ &i2c9 {
++	clock-frequency = <400000>;
+ 	status = "okay";
+ 
+ 	nanosic_mcu@4c {
+diff --git a/drivers/hid/hid-nanosic-wn8030.c b/drivers/hid/hid-nanosic-wn8030.c
+index 1769e197c..ed16e7dc2 100644
+--- a/drivers/hid/hid-nanosic-wn8030.c
++++ b/drivers/hid/hid-nanosic-wn8030.c
+@@ -791,6 +791,7 @@ static irqreturn_t nanosic_wn8030_handler(int irq, void *data)
+ 	int ret;
+ 	struct nanosic_wn8030 *nanosic = data;
+ 	u8 buf[XM_WN8030_I2C_READ];
++	int loop_count = 0;
+ 
+ 	/* After sleep pin deactivated, fw will trigger irq to notify about
+ 	 * successful resume, second irq will tell about kb connection state
+@@ -801,61 +802,63 @@ static irqreturn_t nanosic_wn8030_handler(int irq, void *data)
+ 		return IRQ_HANDLED;
+ 	}
+ 
+-	ret = regmap_bulk_read(nanosic->regmap, 0x4c, buf, sizeof(buf));
+-	if (ret) {
+-		dev_warn(nanosic->dev, "failed to read data on irq %d\n", ret);
+-		return IRQ_HANDLED;
+-	}
+-
+-	/* Bad data */
+-	if (buf[0] != 0x57 || buf[2] == 0x0)
+-		return IRQ_HANDLED;
++	/* Drain all pending packets from the MCU FIFO */
++	while (loop_count++ < 16) {
++		ret = regmap_bulk_read(nanosic->regmap, 0x4c, buf, sizeof(buf));
++		if (ret) {
++			if (loop_count == 1)
++				dev_warn(nanosic->dev, "failed to read data on irq %d\n", ret);
++			break;
++		}
+ 
+-	switch (buf[3]) {
+-	case 0x5: {
+-		bool micmute_down;
+-		bool micmute_was_down;
++		/* No more data or invalid packet */
++		if (buf[0] != 0x57 || buf[2] == 0x0)
++			break;
+ 
+-		if (!READ_ONCE(nanosic->input_enabled))
++		switch (buf[3]) {
++		case 0x5: {
++			bool micmute_down;
++			bool micmute_was_down;
++
++			if (!READ_ONCE(nanosic->input_enabled))
++				break;
++			micmute_down = nanosic_wn8030_report_has_key(&buf[3], 0x6f);
++			micmute_was_down = READ_ONCE(nanosic->micmute_key_down);
++			if (micmute_down && !micmute_was_down)
++				WRITE_ONCE(nanosic->micmute_key_down, true);
++			if (nanosic->hid_keyboard)
++				hid_input_report(nanosic->hid_keyboard, HID_INPUT_REPORT,
++						 &buf[3], 9, 0);
++			if (!micmute_down && micmute_was_down) {
++				bool enable;
++
++				/* Do not send the LED command before the key release report. */
++				mutex_lock(&nanosic->conn_mutex);
++				nanosic->micmute_key_down = false;
++				enable = READ_ONCE(nanosic->micmute_led.brightness) != LED_OFF;
++				nanosic_wn8030_sync_micmute_led(nanosic, enable);
++				mutex_unlock(&nanosic->conn_mutex);
++			}
++			break;
++		}
++		case 0x6:
++			if (READ_ONCE(nanosic->input_enabled) && nanosic->hid_keyboard)
++				hid_input_report(nanosic->hid_keyboard, HID_INPUT_REPORT,
++						 &buf[3], 3, 0);
++			break;
++		case 0x19:
++			if (READ_ONCE(nanosic->input_enabled) && nanosic->hid_touchpad)
++				hid_input_report(nanosic->hid_touchpad, HID_INPUT_REPORT,
++						 &buf[3], 21, 0);
++			break;
++		case 0x22:
++		case 0x23:
++		case 0x24:
++			nanosic_wn8030_handle_vendor(nanosic, buf);
+ 			break;
+-		micmute_down = nanosic_wn8030_report_has_key(&buf[3], 0x6f);
+-		micmute_was_down = READ_ONCE(nanosic->micmute_key_down);
+-		if (micmute_down && !micmute_was_down)
+-			WRITE_ONCE(nanosic->micmute_key_down, true);
+-		if (nanosic->hid_keyboard)
+-			hid_input_report(nanosic->hid_keyboard, HID_INPUT_REPORT,
+-					 &buf[3], 9, 0);
+-		if (!micmute_down && micmute_was_down) {
+-			bool enable;
+-
+-			/* Do not send the LED command before the key release report. */
+-			mutex_lock(&nanosic->conn_mutex);
+-			nanosic->micmute_key_down = false;
+-			enable = READ_ONCE(nanosic->micmute_led.brightness) != LED_OFF;
+-			nanosic_wn8030_sync_micmute_led(nanosic, enable);
+-			mutex_unlock(&nanosic->conn_mutex);
+ 		}
+-		break;
+-	}
+-	case 0x6:
+-		if (READ_ONCE(nanosic->input_enabled) && nanosic->hid_keyboard)
+-			hid_input_report(nanosic->hid_keyboard, HID_INPUT_REPORT,
+-					 &buf[3], 3, 0);
+-		break;
+-	case 0x19:
+-		if (READ_ONCE(nanosic->input_enabled) && nanosic->hid_touchpad)
+-			hid_input_report(nanosic->hid_touchpad, HID_INPUT_REPORT,
+-					 &buf[3], 21, 0);
+-		break;
+-	case 0x22:
+-	case 0x23:
+-	case 0x24:
+-		nanosic_wn8030_handle_vendor(nanosic, buf);
+-		break;
+ 	}
+ 
+-	//print_hex_dump(KERN_INFO, "", DUMP_PREFIX_OFFSET, 16, 1, buf, sizeof(buf), false);
+-
+ 	return IRQ_HANDLED;
+ }
+ 

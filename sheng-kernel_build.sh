@@ -25,6 +25,9 @@ cd linux
 # wget https://github.com/code002-2/sm8550-mainline/commit/57512186fc43a902e38945da91c656dc36400362.patch
 # git apply *patch
 # rm *patch
+
+git apply ../patch/fix-nanosic-key-repeat.patch
+
 cp ../sm8550.config .config
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1
