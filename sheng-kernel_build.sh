@@ -120,7 +120,7 @@ make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1 INSTALL_MOD_PATH=../linux-xi
 rm -f ../linux-xiaomi-sheng/lib/modules/${_kernel_version}/build ../linux-xiaomi-sheng/lib/modules/${_kernel_version}/source
 
 # Install kernel headers untuk build modul (DKMS/extmod) dan buat symlink /lib/modules/<ver>/build
-./scripts/package/install-extmod-build ../linux-xiaomi-sheng/usr/src/linux-headers-${_kernel_version}
+srctree=. objtree=. SRCARCH=arm64 KCONFIG_CONFIG=.config ./scripts/package/install-extmod-build ../linux-xiaomi-sheng/usr/src/linux-headers-${_kernel_version}
 ln -sf /usr/src/linux-headers-${_kernel_version} ../linux-xiaomi-sheng/lib/modules/${_kernel_version}/build
 
 cd ..
