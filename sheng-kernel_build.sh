@@ -18,7 +18,7 @@ export OBJDUMP="llvm-objdump"
 export READELF="llvm-readelf"
 export STRIP="llvm-strip"
 
-git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.2.2 --depth 1 linux
+git clone https://github.com/alghiffaryfa19/sm8550-mainline.git --branch sheng-7.3.4 --depth 1 linux
 cd linux
 
 # MIPPS
@@ -110,7 +110,11 @@ echo "ESP image created: $ESP_IMG"
 #rm $1/linux-xiaomi-sheng/usr/dummy
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1 INSTALL_MOD_PATH=../linux-xiaomi-sheng modules_install
-rm ../linux-xiaomi-sheng/lib/modules/**/build
+rm -f ../linux-xiaomi-sheng/lib/modules/${_kernel_version}/build ../linux-xiaomi-sheng/lib/modules/${_kernel_version}/source
+
+# Install kernel headers untuk build modul (DKMS/extmod) dan buat symlink /lib/modules/<ver>/build
+./scripts/package/install-extmod-build ../linux-xiaomi-sheng/usr/src/linux-headers-${_kernel_version}
+ln -sf /usr/src/linux-headers-${_kernel_version} ../linux-xiaomi-sheng/lib/modules/${_kernel_version}/build
 
 cd ..
 git clone https://github.com/alghiffaryfa19/sheng-firmware
