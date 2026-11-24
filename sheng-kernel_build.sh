@@ -26,9 +26,16 @@ cd linux
 # git apply *patch
 # rm *patch
 
-git apply ../patch/fix-nanosic-key-repeat.patch
+if git apply --check ../patch/fix-nanosic-key-repeat.patch; then
+    git apply ../patch/fix-nanosic-key-repeat.patch
+    echo "✅ Patch fix-nanosic-key-repeat.patch berhasil diterapkan!"
+else
+    echo "❌ Gagal menerapkan patch fix-nanosic-key-repeat.patch!"
+    exit 1
+fi
 
 cp ../sm8550.config .config
+make ARCH=arm64 CC="ccache clang" LLVM=1 olddefconfig
 
 make -j$(nproc) ARCH=arm64 CC="ccache clang" LLVM=1
 _kernel_version="$(make kernelrelease -s)"
