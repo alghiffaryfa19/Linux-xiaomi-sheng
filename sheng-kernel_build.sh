@@ -84,8 +84,8 @@ install -Dm644 Image.gz-dtb_sheng \
     $PKGDIR/boot/Image.gz-dtb_sheng
 
 mv Image.gz-dtb_sheng zImage_sheng
-../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=linux cma=4G rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_dualboot.img
-../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata cma=4G rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
+../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=linux cma=3840M@0x8c0000000-0xa00000000 rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_dualboot.img
+../mkbootimg --kernel zImage_sheng --cmdline "root=PARTLABEL=userdata cma=3840M@0x8c0000000-0xa00000000 rootwait rw fsck.repair=yes" --base 0x00000000 --kernel_offset 0x00008000 --tags_offset 0x01e00000 --pagesize 4096 --id -o ../boot_sheng_singleboot.img
 
 ukify build \
   --linux=arch/arm64/boot/Image \
